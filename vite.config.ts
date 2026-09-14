@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: './', // Use relative paths for GitHub Pages subdirectories
+    base: '/Linguaforge/', // Explicitly set for GitHub Pages project repository
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
