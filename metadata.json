@@ -1,0 +1,6 @@
+{
+  "name": "LinguaForge",
+  "description": "An AI-powered language-learning companion and vocabulary forge.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
