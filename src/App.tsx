@@ -27,6 +27,18 @@ export default function App() {
   // Current active navigation tab
   const [activeTab, setActiveTab] = useState<"tutor" | "forge" | "sandbox" | "game" | "worksheet">("tutor");
 
+  // Settings Modal State
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKey, setApiKey] = useState(() => {
+    return localStorage.getItem("linguaforge_api_key") || "";
+  });
+
+  const saveApiKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem("linguaforge_api_key", key);
+    setShowSettings(false);
+  };
+
   // Expand / Full View mode (hides sidebar)
   const [isFullView, setIsFullView] = useState(false);
 
@@ -295,7 +307,49 @@ export default function App() {
           setTheme={setTheme}
           mode={mode}
           setMode={setMode}
+          onOpenSettings={() => setShowSettings(true)}
         />
+      )}
+
+      {/* Settings Modal (API Key) */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in">
+          <div className={`w-full max-w-md p-6 rounded-2xl shadow-xl ${
+            mode === "dark" ? "bg-slate-900 border border-slate-800" : "bg-white"
+          }`}>
+            <h2 className="text-xl font-bold mb-2">API Settings</h2>
+            <p className={`text-sm mb-6 ${mode === "dark" ? "text-slate-400" : "text-slate-500"}`}>
+              Enter your Gemini API key to power the AI features. This key is stored securely in your browser's local storage and is never sent to our servers.
+            </p>
+            <input
+              type="password"
+              placeholder="AIzaSy..."
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className={`w-full p-3 rounded-xl border font-mono text-sm mb-4 focus:outline-none focus:ring-2 ${
+                mode === "dark" 
+                  ? "bg-slate-950 border-slate-800 text-white focus:ring-slate-700" 
+                  : "bg-slate-50 border-slate-200 focus:ring-slate-200"
+              }`}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSettings(false)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  mode === "dark" ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveApiKey(apiKey)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors"
+              >
+                Save Key
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 2. Main Content View workspace panel */}

@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { generateContent } from "../lib/gemini";
 import { 
   PenTool, 
   Sparkles, 
@@ -43,21 +44,34 @@ export default function GrammarSandbox({
     setResult(null);
 
     try {
-      const res = await fetch("/api/sandbox/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language,
-          level,
-          text: inputText.trim()
-        })
+      const data = await generateContent({
+        contents: [{ role: "user", parts: [{ text: `Analyze this ${language} text written by a ${level} student: "${inputText.trim()}"` }] }],
+        config: {
+          systemInstruction: `You are an expert ${language} tutor. Analyze the provided text for grammatical, orthographical, and stylistic accuracy.Provide friendly, comprehensive overall feedback in English.Provide line-by-line grammatical, orthographical, or stylistic corrections.Provide a polished, elegant, native-sounding "improved version" of the entire text.Return the result strictly as a JSON object.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              score: { type: "INTEGER" },
+              feedback: { type: "STRING" },
+              corrections: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    original: { type: "STRING", description: "The original phrase or sentence containing errors" },
+                    corrected: { type: "STRING", description: "The corrected or improved version" },
+                    explanation: { type: "STRING", description: "Explanation of the rule or why this sounds more natural" },
+                  },
+                  required: ["original", "corrected", "explanation"],
+                },
+              },
+              improvedVersion: { type: "STRING", description: "The complete polished text" },
+            },
+            required: ["score", "feedback", "corrections", "improvedVersion"],
+          },
+        }
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to analyze grammar.");
-      }
 
       setResult(data);
       // Award XP based on grammar accuracy score!

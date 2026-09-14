@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { generateContent } from "../lib/gemini";
 import { 
   Send, 
   Sparkles, 
@@ -97,28 +98,50 @@ export default function TutorChat({
     setIsLoading(true);
 
     try {
-      // Map message history to Express body
-      // We pass the last 12 messages to keep it responsive and stay within limits
+      // Map message history to gemini body format
       const apiMessages = updatedHistory.slice(-12).map(msg => ({
-        role: msg.role,
-        content: msg.content
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }]
       }));
 
-      const res = await fetch("/api/tutor/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language,
-          level,
-          messages: apiMessages
-        })
+      const data = await generateContent({
+        contents: apiMessages,
+        config: {
+          systemInstruction: `You are an expert, encouraging language tutor for ${language} at the ${level} level.Respond to the user naturally in ${language}. Keep responses concise and appropriate for their level.Always provide an English translation of your reply.If the user made grammatical or spelling errors in their LAST message, provide polite corrections.If the user used interesting vocabulary, or if you introduce new useful words, list 1-3 vocabulary words.Return the result strictly as a JSON object.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              reply: { type: "STRING" },
+              translation: { type: "STRING" },
+              corrections: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    original: { type: "STRING" },
+                    corrected: { type: "STRING" },
+                    explanation: { type: "STRING" },
+                  },
+                },
+              },
+              vocabulary: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    word: { type: "STRING" },
+                    type: { type: "STRING" },
+                    translation: { type: "STRING" },
+                    example: { type: "STRING" },
+                  },
+                },
+              },
+            },
+            required: ["reply", "translation"],
+          },
+        }
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to get reply from tutor.");
-      }
 
       const tutorMessage: ChatMessage = {
         id: `tutor-${Date.now()}`,

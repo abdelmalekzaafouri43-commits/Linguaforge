@@ -1,5 +1,6 @@
 import { useState, useEffect, Dispatch, SetStateAction, FormEvent, MouseEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { generateContent } from "../lib/gemini";
 import { 
   Plus, 
   Layers, 
@@ -54,21 +55,28 @@ export default function VocabForge({
     setError(null);
 
     try {
-      const res = await fetch("/api/forge/vocabulary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language,
-          level,
-          topic: topicInput.trim()
-        })
+      const data = await generateContent({
+        contents: [{ role: "user", parts: [{ text: `Generate a vocabulary list for ${language} at the ${level} level. The topic is ${topicInput.trim()}.` }] }],
+        config: {
+          systemInstruction: `You are an expert ${language} tutor. Generate a vocabulary list of exactly 10 essential words or phrases based on the user's requested topic and proficiency level. Output exactly as a JSON array of objects.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                word: { type: "STRING" },
+                pronunciation: { type: "STRING", description: "Phonetic pronunciation, romanization, furigana or pronunciation guide" },
+                partOfSpeech: { type: "STRING", description: "Part of speech (noun, verb, adjective, expression, etc.)" },
+                translation: { type: "STRING", description: "English translation of the word" },
+                exampleOriginal: { type: "STRING", description: "A simple context sentence in the target language" },
+                exampleTranslation: { type: "STRING", description: "English translation of the context sentence" },
+              },
+              required: ["word", "pronunciation", "partOfSpeech", "translation", "exampleOriginal", "exampleTranslation"]
+            }
+          }
+        }
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to forge vocabulary deck.");
-      }
 
       const newDeck: VocabDeck = {
         id: `deck-${Date.now()}`,

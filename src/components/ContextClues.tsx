@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { generateContent } from "../lib/gemini";
 import { 
   Gamepad2, 
   HelpCircle, 
@@ -44,17 +45,27 @@ export default function ContextClues({
     setIsSubmitted(false);
 
     try {
-      const res = await fetch("/api/game/challenge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language, level })
+      const data = await generateContent({
+        contents: [{ role: "user", parts: [{ text: `Generate a fill-in-the-blank language challenge for ${language} at the ${level} level.` }] }],
+        config: {
+          systemInstruction: `Create an interactive fill-in-the-blank grammar or vocabulary question for a ${level} level student of ${language}.Make it interesting and context-rich. Provide a sentence in ${language} with a blank placeholder '______' representing a missing word.Provide 4 options, with exactly one being the correct word that fits grammatically and semantically.Provide the 0-indexed position of the correct option.Provide the English translation of the completed sentence.Provide a clear explanation of why the correct option fits and why other options are incorrect.Return the result strictly as a JSON object.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              sentenceWithBlank: { type: "STRING" },
+              options: {
+                type: "ARRAY",
+                items: { type: "STRING" },
+              },
+              correctOptionIndex: { type: "INTEGER" },
+              translation: { type: "STRING" },
+              explanation: { type: "STRING" },
+            },
+            required: ["sentenceWithBlank", "options", "correctOptionIndex", "translation", "explanation"],
+          },
+        }
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch a new challenge.");
-      }
 
       setChallenge(data);
     } catch (err: any) {

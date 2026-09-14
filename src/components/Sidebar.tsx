@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Palette
+  Palette,
+  Settings
 } from "lucide-react";
 import { Language, ProficiencyLevel, UserStats, AppTheme, AppMode, getThemeColors } from "../types";
 
@@ -31,6 +32,7 @@ interface SidebarProps {
   setTheme: (theme: AppTheme) => void;
   mode: AppMode;
   setMode: (mode: AppMode) => void;
+  onOpenSettings?: () => void;
 }
 
 const LANGUAGES: Language[] = [
@@ -50,7 +52,8 @@ export default function Sidebar({
   theme,
   setTheme,
   mode,
-  setMode
+  setMode,
+  onOpenSettings
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -132,15 +135,28 @@ export default function Sidebar({
           )}
         </div>
 
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
-            mode === "dark" ? "hover:bg-slate-800 text-slate-500 hover:text-slate-300" : "hover:bg-slate-100 text-slate-400 hover:text-slate-700"
-          }`}
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                mode === "dark" ? "hover:bg-slate-800 text-slate-500 hover:text-slate-300" : "hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+              }`}
+              title="API Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+              mode === "dark" ? "hover:bg-slate-800 text-slate-500 hover:text-slate-300" : "hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+            }`}
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Target Language Selection & Settings Panel */}
