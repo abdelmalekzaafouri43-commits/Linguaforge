@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   return {
-    base: '/Linguaforge/', // Explicitly set for GitHub Pages project repository
+    // Use /Linguaforge/ for GitHub Pages production build, but / for local AI Studio development
+    base: command === 'build' ? '/Linguaforge/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
